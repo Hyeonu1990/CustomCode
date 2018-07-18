@@ -37,13 +37,11 @@ public :
 				Point2f vvv1 = VectorNomalize(entireMarker[1] - entireMarker[0]);
 				Point2f vvv2 = VectorNomalize(entireMarker[1] - entireMarker[2]);
 				float SWnj = v1.x * v2.x + v1.y * v2.y;
-
+				printf("허이짜\n");
 				if (abs(nj) < 0.18f && // 0.04
 					(Angle(NEnj) > 85 && Angle(NEnj) < 96) &&
 					(Angle(SWnj) > 80 && Angle(SWnj) < 95))
 				{
-
-
 					Mat marker_image;
 					int marker_image_side_length = smallMode ? 210 : 354;//smallMode?288:576; 
 
@@ -54,31 +52,27 @@ public :
 					square_points.push_back(Point2f(marker_image_side_length - 1, 0)); //Point(0, marker_image_side_length - 1)
 
 					//마커를 사각형형태로 바꿀 perspective transformation matrix를 구한다.
-					vector<Point2f> dst;
-					dst.push_back(Point2f((float)entireMarker[0].x, (float)entireMarker[0].y));
-					dst.push_back(Point2f((float)entireMarker[1].x, (float)entireMarker[1].y)); //Point2f((float)entireMarker[3].x, (float)entireMarker[3].y)
-					dst.push_back(Point2f((float)entireMarker[2].x, (float)entireMarker[2].y));
-					dst.push_back(Point2f((float)entireMarker[3].x, (float)entireMarker[3].y)); //Point2f((float)entireMarker[1].x, (float)entireMarker[1].y)
+					vector<Point2f> persrc;
+					persrc.push_back(Point2f((float)entireMarker[0].x, (float)entireMarker[0].y));
+					persrc.push_back(Point2f((float)entireMarker[1].x, (float)entireMarker[1].y)); //Point2f((float)entireMarker[3].x, (float)entireMarker[3].y)
+					persrc.push_back(Point2f((float)entireMarker[2].x, (float)entireMarker[2].y));
+					persrc.push_back(Point2f((float)entireMarker[3].x, (float)entireMarker[3].y)); //Point2f((float)entireMarker[1].x, (float)entireMarker[1].y)
 					
-					Mat PerspectiveTransformMatrix = getPerspectiveTransform(entireMarker, dst);
+					Mat PerspectiveTransformMatrix = getPerspectiveTransform(persrc, square_points);
 					
 					//perspective transformation을 적용한다. 
 					Mat input_gray_image;
-					cvtColor(*src, input_gray_image, 6);
+					cvtColor(*src, input_gray_image, CV_64F);
+					
 
-					//if (pcmode) Imgcodecs.imwrite("D:\\imgs\\input_gray_image" + i.ToString() + ".png", input_gray_image);
+					warpPerspective(input_gray_image, marker_image, PerspectiveTransformMatrix, Size(marker_image_side_length, marker_image_side_length));
+					//warpPerspective(*src, marker_image, PerspectiveTransformMatrix, Size(marker_image_side_length, marker_image_side_length));
 
-					//Imgproc.warpPerspective(input_gray_image, marker_image, PerspectiveTransformMatrix, new Size(marker_image_side_length, marker_image_side_length));
-					warpPerspective(*src, marker_image, PerspectiveTransformMatrix, Size(marker_image_side_length, marker_image_side_length));
-
-					//촬영된 이미지 불러오기 부분(연구용)
-					//cvtColor(marker_image, marker_image, Imgproc.COLOR_BGR2RGB);
-					//if (pcmode) imwrite("D:\\imgs\\total_marker_image" + i.ToString() + ".png", marker_image);
 
 					Mat valueimg = marker_image(Rect(33, 33, marker_image_side_length - 33 * 2, marker_image_side_length - 33 * 2));
-					//Imgproc.threshold(valueimg, valueimg, 0, 255, 0 | 8); // THRESH_BINARY = 0 | THRESH_OTSU = 8
+					//threshold(valueimg, valueimg, 0, 255, 0 | 8); // THRESH_BINARY = 0 | THRESH_OTSU = 8
 					adaptiveThreshold(valueimg, valueimg, 255, 1, 0, 35, 2); // ADAPTIVE_THRESH_GAUSSIAN_C = 1, THRESH_BINARY = 0
-					if (pcmode) imwrite("D:\\imgs\\valueimg" + to_string(i) + ".png", valueimg);
+					if (pcmode) imshow("valueimg", valueimg);//imwrite("D:\\imgs\\valueimg" + to_string(i) + ".png", valueimg);
 
 
 					//내부 10x10에 있는 정보를 비트로 저장하기 위한 변수
@@ -102,8 +96,9 @@ public :
 							}
 						}
 					}
-					if (pcmode) imwrite("D:\\imgs\\valueimg_bitMatrix" + to_string(i) + ".png", bitMatrix);
+					//if (pcmode) imwrite("D:\\imgs\\valueimg_bitMatrix" + to_string(i) + ".png", bitMatrix);
 					*result = CatchCharArray(bitMatrix);
+					cout << *result << endl;
 					i++;
 				}
 			}
@@ -111,90 +106,32 @@ public :
 	}
 
 private:
+	vector<vector<Point2f>> marker; //밑에 for문으로 contours에서 조건에 맞는 녀석들 여기로 저장
+	vector<vector<Point2f>> L5marker; //maker중 ㄱ모양, L5marker[5] : 모서리끝
+	vector<vector<Point2f>> L1marker; //maker중 ㄴ모양, L1marker[1] : 모서리끝
+	vector<Point2f> L5pos; //ㄴ모양빼고 위치들(5번이 사각형 모서리)
+	Point L1pos; // ㄴ모양 위치(1번이 사각형 모서리)
+	vector<vector<Point2f>>detectedMarkers;
+	vector<Mat> detectedMarkersImage;
+
 	int Find_Code(Mat* src, vector<Point2f>* mk)
 	{
 		Mat input_image = src->clone();
-		if (pcmode) imwrite("D:\\imgs\\input_image" + to_string(i) + ".png", input_image);
+		if (pcmode) imshow("input_image", input_image);imwrite("D:\\imgs\\input_image.png", input_image);
 
 		Mat input_gray_image;
 
 		cvtColor(input_image, input_gray_image, 6);
 
-		//Adaptive Thresholding을 적용하여 이진화 한다. 
-		Mat binary_image;
-		adaptiveThreshold(input_gray_image, binary_image, 255, 1, 1, 37, 2); //ADAPTIVE_THRESH_GAUSSIAN_C = 1, THRESH_BINARY_INV = 1, 91, 7
-																					 //Imgproc.threshold(input_gray_image, binary_image, 0, 255, 1 | 8); //THRESH_BINARY_INV | THRESH_OTSU
-		if (pcmode) imwrite("D:\\imgs\\binary_image" + to_string(i) + ".png", binary_image);
-		/////////////////////////////////////////////////////////////////////////////////////////////////////////////////////코드사각형따기
-
-		//contours를 찾는다.
-		Mat contour_image = binary_image.clone();
-		vector<vector<Point>> contours;
-		Mat hierarchy;
-		findContours(contour_image, contours, hierarchy, 1, 2); //RETR_LIST, CHAIN_APPROX_SIMPLE
-
-																		//contour를 근사화한다.
-		vector<vector<Point2f>> marker; //밑에 for문으로 contours에서 조건에 맞는 녀석들 여기로 저장
-		vector<vector<Point2f>> L5marker; //maker중 ㄱ모양
-		vector<vector<Point2f>> L1marker; //maker중 ㄴ모양
-		vector<Point2f> approx;
-
-		vector<Point2f> L5pos; //ㄴ모양빼고 위치들(5번이 사각형 모서리)
-		Point L1pos; // ㄴ모양 위치(1번이 사각형 모서리)
-
-		for (int i = 0; i < contours.size(); i++)
-		{
-			approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.05, true);
-			if (
-				fabs(contourArea(Mat(approx))) > input_image.rows / 30 * input_image.cols / 30 && //면적이 일정크기 이상이어야 한다. //input_image.rows() / 10 * input_image.cols() / 10 
-				fabs(contourArea(Mat(approx))) < input_image.rows / 7 * input_image.cols / 7 //면적이 일정크기 이하여야 한다. //input_image.rows() / 4 * input_image.cols() / 4
-				)
-			{
-				if (approx.size() == 4 && //사각형은 4개의 vertex를 가진다.
-					isContourConvex(Mat(approx)) //convex인지 검사한다.
-					)
-				{
-					vector<Point2f> points;
-					for (int j = 0; j<approx.size(); j++)
-						points.push_back(cv::Point2f(approx[j].x, approx[j].y));
-					marker.push_back(points);
-				}
-				else if (approx.size() == 6 && //육각형은 6개의 vertex를 가진다.
-					!isContourConvex(Mat(approx)) //convex가 아닌지 검사한다.
-					)
-				{
-					//벡터 내적을 위한 변수들
-					Point2f vec0 = approx[0];
-					Point2f vec1 = approx[2];
-					Point2f vec2 = approx[4];
-					Point2f vec3 = approx[5];
-					float vnj = VectorNomalize(vec2 - vec0).x * VectorNomalize(vec3 - vec1).x + VectorNomalize(vec2 - vec0).y * VectorNomalize(vec3 - vec1).y;
-					if (abs(vnj) < 0.46)// ㄴ모양을 제외한 육각형 //0.17
-					{
-						vector<Point2f> points;
-						for (int j = 0; j<approx.size(); j++)
-							points.push_back(cv::Point2f(approx[j].x, approx[j].y));
-						L5marker.push_back(points);
-						//L5pos.Add(points.toArray()[5]);
-						//Debug.Log("L5pos : " + points.toArray()[5] + "\n vnj : " + Mathf.Abs(vnj) + "\n angle : " + angle);
-						//Debug.Log(points.toArray()[5] +"\n"+(input_image.rows() / 30 * input_image.cols() / 30) + ", " + Imgproc.contourArea(approx));
-					}
-					else if (abs(vnj) > 0.9) // ㄴ모양 육각형
-					{
-						vector<Point2f> points;
-						for (int j = 0; j<approx.size(); j++)
-							points.push_back(cv::Point2f(approx[j].x, approx[j].y));
-						L1marker.push_back(points);
-						//L1pos = points.toArray()[1];
-						//Debug.Log("L1pos : " + points.toArray()[5] + "\n vnj : " + Mathf.Abs(vnj) + "\n angle : " + angle);
-					}
-				}
-			}
-		}
+		FindContours(&input_gray_image);
 
 		//Imgcodecs.imwrite("D:\\imgs\\input_image.png", input_image);
-		////////사각형P1차확인/////////////////////////////////////////////////////////////////////////////////////////////////////////////코드사각형정렬
 
+		//마커들 확인
+		MarkerFinder(&marker, &input_gray_image, 0);
+		MarkerFinder(&L5marker, &input_gray_image, 1);
+		MarkerFinder(&L1marker, &input_gray_image, 2);
+		/*
 		vector<vector<Point2f>>detectedMarkers;
 		vector<Mat> detectedMarkersImage;
 
@@ -358,7 +295,7 @@ private:
 			if (data == 223)//(white_cell_count == 7)
 				L1pos = m[1];
 		}
-
+		*/
 
 		/////마커들 비트매트릭스화 하여 내부판단////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//검은색 테두리 제외한 내부 확인
@@ -374,7 +311,6 @@ private:
 			Mat bitMatrix = Mat::zeros(10, 10, CV_8UC1);
 
 			int cellSize = marker_img.rows / 10;
-			//cout << "Marker" + to_string(i) << endl;
 			int white_cell_count = 1;
 			int black_cell_count = 0;
 			int angle = 0;
@@ -419,7 +355,8 @@ private:
 						}
 					}
 				}
-				if (pcmode) imwrite("D:\\imgs\\bitMatrix" + to_string(i) + ".png", bitMatrix);
+				//if (pcmode) imwrite("D:\\imgs\\bitMatrix" + to_string(i) + ".png", bitMatrix);
+
 				//방향판단
 				//if (bitMatrix.get(7, 7)[0] > 0 && bitMatrix.get(7, 6)[0] == 0)
 				if (bitMatrix.at<uchar>(2, 7) > 0 && bitMatrix.at<uchar>(2, 6) == 0)
@@ -458,7 +395,8 @@ private:
 				{
 					continue;
 				}
-				if (pcmode) imwrite("D:\\imgs\\bitMatrixturned" + to_string(i) + "_" + to_string(angle) + ".png", bitMatrix);
+				//if (pcmode) imwrite("D:\\imgs\\bitMatrixturned" + to_string(i) + "_" + to_string(angle) + ".png", bitMatrix);
+
 				//P판단
 				white_cell_count = 0;
 				for (int y = 0; y < 6; y++)
@@ -617,7 +555,7 @@ private:
 		value[7] = (char)tmp;
 
 		value[8] = '\0';
-
+		printf("value : %s\n", value);
 		bool BadValue = false;
 		for (int i = 0; i < 8; i++)
 		{
@@ -662,5 +600,199 @@ private:
 		int angle = acosf(innerValue) * 180 / CV_PI;
 
 		return angle;
+	}
+	
+	void FindContours(Mat* input_gray_image)
+	{
+		//Adaptive Thresholding을 적용하여 이진화 한다. 
+		Mat binary_image;
+		adaptiveThreshold(*input_gray_image, binary_image, 255, 1, 1, 37, 2); //ADAPTIVE_THRESH_GAUSSIAN_C = 1, THRESH_BINARY_INV = 1, 91, 7
+		//threshold(input_gray_image, binary_image, 0, 255, 1 | 8); //THRESH_BINARY_INV | THRESH_OTSU
+		//if (pcmode) imwrite("D:\\imgs\\binary_image" + to_string(i) + ".png", binary_image);
+		
+		//contours를 찾는다.
+		Mat contour_image = binary_image.clone();
+		vector<vector<Point>> contours;
+		Mat hierarchy;
+		findContours(contour_image, contours, hierarchy, 1, 2); //RETR_LIST, CHAIN_APPROX_SIMPLE
+
+		/*if (pcmode)
+		{
+			Mat input_image2 = input_gray_image->clone();
+			for (size_t i = 0; i < contours.size(); i++)
+			{
+				drawContours(input_image2, contours, i, Scalar(255, 0, 0), 1, LINE_AA);
+			}
+			imshow("All_Contours", input_image2);
+		}*/
+
+		//contour를 근사화한다.
+		vector<Point2f> approx;
+		for (int i = 0; i < contours.size(); i++)
+		{
+			approxPolyDP(Mat(contours[i]), approx, arcLength(Mat(contours[i]), true)*0.05, true);
+			if (
+				fabs(contourArea(Mat(approx))) > input_gray_image->rows / 30 * input_gray_image->cols / 30 && //면적이 일정크기 이상이어야 한다. //input_image.rows() / 10 * input_image.cols() / 10 
+				fabs(contourArea(Mat(approx))) < input_gray_image->rows / 7 * input_gray_image->cols / 7 //면적이 일정크기 이하여야 한다. //input_image.rows() / 4 * input_image.cols() / 4
+				)
+			{
+				if (approx.size() == 4 && //사각형은 4개의 vertex를 가진다.
+					isContourConvex(Mat(approx)) //convex인지 검사한다.
+					)
+				{
+					vector<Point2f> points;
+					for (int j = 0; j<approx.size(); j++)
+						points.push_back(cv::Point2f(approx[j].x, approx[j].y));
+					marker.push_back(points);
+				}
+				else if (approx.size() == 6 && //육각형은 6개의 vertex를 가진다.
+					!isContourConvex(Mat(approx)) //convex가 아닌지 검사한다.
+					)
+				{
+					//벡터 내적을 위한 변수들
+					Point2f vec0 = approx[0];
+					Point2f vec1 = approx[2];
+					Point2f vec2 = approx[4];
+					Point2f vec3 = approx[5];
+					float vnj = VectorNomalize(vec2 - vec0).x * VectorNomalize(vec3 - vec1).x + VectorNomalize(vec2 - vec0).y * VectorNomalize(vec3 - vec1).y;
+					printf("벡터내적 : %f\n", vnj);
+					if (abs(vnj) < 0.46)// ㄴ모양을 제외한 육각형 //0.17
+					{
+						vector<Point2f> points;
+						for (int j = 0; j<approx.size(); j++)
+							points.push_back(cv::Point2f(approx[j].x, approx[j].y));
+						L5marker.push_back(points);
+					}
+					else if (abs(vnj) > 0.9) // ㄴ모양 육각형
+					{
+						vector<Point2f> points;
+						for (int j = 0; j<approx.size(); j++)
+							points.push_back(cv::Point2f(approx[j].x, approx[j].y));
+						L1marker.push_back(points);
+					}
+				}
+			}
+		}
+	}
+
+	void MarkerFinder(vector<vector<Point2f>>* marker, Mat* input_gray_image, int Lmarker)
+	{
+		////////사각형P1차확인/////////////////////////////////////////////////////////////////////////////////////////////////////////////코드사각형정렬
+		
+		int marker_image_side_length = 100; //P마커 10x10
+											//이미지를 격자로 분할할 시 셀하나의 픽셀너비를 10으로 한다면
+											//P마커 이미지의 한변 길이는 100
+		vector<Point2f> square_points;
+		square_points.push_back(Point2f(0, 0));
+		square_points.push_back(Point2f(0, (Lmarker > 0) ? (marker_image_side_length * 3 / 10 - 1) : (marker_image_side_length - 1)));
+		square_points.push_back(Point2f(marker_image_side_length - 1, (Lmarker > 0) ? (marker_image_side_length * 3 / 10 - 1) : (marker_image_side_length - 1)));
+		square_points.push_back(Point2f(marker_image_side_length - 1, 0));
+			
+
+		Mat marker_image;
+		for (int i = 0; i < marker->size(); i++)
+		{
+			vector<Point2f> m = (*marker)[i];
+			//마커를 사각형형태로 바꿀 perspective transformation matrix를 구한다.
+
+			vector<Point2f> persrc;
+
+			if (Lmarker == 0) persrc = m;
+			else if(Lmarker == 1)
+			{
+				persrc.push_back(Point2f((float)m[0].x, (float)m[0].y));
+				persrc.push_back(Point2f((float)m[1].x, (float)m[1].y));
+				persrc.push_back(Point2f((float)m[2].x + (float)m[4].x - (float)m[3].x, (float)m[2].y + (float)m[4].y - (float)m[3].y));
+				persrc.push_back(Point2f((float)m[5].x, (float)m[5].y));
+			}
+			else if (Lmarker == 2)
+			{
+				persrc.push_back(Point2f((float)m[0].x + (float)m[4].x - (float)m[5].x, (float)m[0].y + (float)m[4].y - (float)m[5].y));
+				persrc.push_back(Point2f((float)m[1].x, (float)m[1].y));
+				persrc.push_back(Point2f((float)m[2].x, (float)m[2].y));
+				persrc.push_back(Point2f((float)m[3].x, (float)m[3].y));
+			}
+
+			Mat PerspectiveTransformMatrix = getPerspectiveTransform(persrc, square_points);
+			if(Lmarker > 0)cout << m << endl;
+			//perspective transformation을 적용한다. 
+			warpPerspective(*input_gray_image, marker_image, PerspectiveTransformMatrix, Size(marker_image_side_length, (Lmarker) ? (marker_image_side_length * 3 / 10) : (marker_image_side_length)));
+			//imshow("input_gray_image_pserspective_transform" + to_string(i), marker_image);
+
+			//이진화를 적용한다. 
+			threshold(marker_image, marker_image, 0, 255, 0 | 8); // THRESH_BINARY = 0 | THRESH_OTSU = 8
+			//adaptiveThreshold(marker_image, marker_image, 255, 1, 0, 11, 2); // ADAPTIVE_THRESH_GAUSSIAN_C = 1, THRESH_BINARY = 0
+			if (pcmode) 
+				if(Lmarker)
+					imwrite("D:\\imgs\\Lmarker_image" + to_string(i) + ".png", marker_image); //imshow("marker_image" + to_string(i), marker_image);
+				else
+					imwrite("D:\\imgs\\marker_image" + to_string(i) + ".png", marker_image); //imshow("marker_image" + to_string(i), marker_image);
+
+			//테두리검사부분
+			//검은색 태두리를 포함한 크기는 10
+			//마커 이미지 테두리만 검사하여 전부 검은색인지 확인한다. 
+			int cellSize = marker_image.cols / 10;
+			int white_cell_count = 0;
+			unsigned char data = 0;
+			unsigned char tmp = 1;
+			printf("Lmarker = %d, cellSize = %d\n", Lmarker, cellSize);
+			if (Lmarker==0)
+			{
+				for (int y = 0; y < 10; y++)
+				{
+					int inc = 10; // 첫번째 열과 마지막 열만 검사하기 위한 값
+
+					if (y == 0 || y == 9) inc = 1; //첫번째 줄과 마지막줄은 모든 열을 검사한다. 
+
+					for (int x = 0; x < 10; x += inc)
+					{
+						int cellX = x * cellSize;
+						int cellY = y * cellSize;
+						Mat cell = marker_image(Rect(cellX, cellY, cellSize, cellSize));
+
+						int total_cell_count = countNonZero(cell);
+
+						if (total_cell_count > (cellSize * cellSize) / 2)
+							white_cell_count++; //태두리에 흰색영역이 있다면, 셀내의 픽셀이 절반이상 흰색이면 흰색영역으로 본다
+					}
+				}
+
+				//검은색 태두리로 둘러쌓여 있는 것만 저장한다.
+				if (white_cell_count == 0)
+				{
+					detectedMarkers.push_back(m);
+					Mat img = marker_image.clone();
+					detectedMarkersImage.push_back(img);
+				}
+			}
+			else
+			{
+				for (int x = 1; x < 9; x += 1)
+				{
+					int cellX = x * cellSize;
+					int cellY = 1 * cellSize;
+					Mat cell = marker_image(Rect(cellX, cellY, cellSize, cellSize));
+
+					int total_cell_count = countNonZero(cell);
+
+					if (total_cell_count >(cellSize * cellSize) / 2)
+					{
+						white_cell_count++; //태두리에 흰색영역이 있다면, 셀내의 픽셀이 절반이상 흰색이면 흰색영역으로 본다
+						printf("white_cell_count : %d\n", white_cell_count);
+						data |= tmp;
+					}
+					printf("temp%d : %d\n", i, tmp);
+					tmp <<= 1;
+					
+				}
+				printf("data%d : %d\n", i,data);
+				if (data == 171 || data == 175)//(white_cell_count == 5 || white_cell_count == 6)
+				{
+					L5pos.push_back(m[5]);
+				}
+				else if (data == 223)//(white_cell_count == 7)
+					L1pos = m[1];
+			}			
+		}
 	}
 };
