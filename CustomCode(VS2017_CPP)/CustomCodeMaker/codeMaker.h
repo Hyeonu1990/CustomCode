@@ -14,44 +14,14 @@ public:
 		for (int i = 0; i < 8; i++)
 		{
 			printf("data[%d] : %d\n", i, data[i]);
-			switch (i)
-			{
-			case 0: //51,39
-				DrawingBarcodes(src, data[i], Point(51, 39), true);
-				break;
-			case 1: // 105, 39
-				DrawingBarcodes(src, data[i], Point(105, 39), true);
-				break;
-			case 2: //165,57
-				DrawingBarcodes(src, data[i], Point(165, 57), false);
-				break;
-			case 3: // 165, 111
-				DrawingBarcodes(src, data[i], Point(165, 111), false);
-				break;
-			case 4: //111 165
-				DrawingBarcodes(src, data[i], Point(111, 165), true);
-				break;
-			case 5: //57 165
-				DrawingBarcodes(src, data[i], Point(57, 165), true);
-				break;
-			case 6: // 39, 105
-				DrawingBarcodes(src, data[i], Point(39, 105), false);
-				break;
-			case 7: // 39, 51
-				DrawingBarcodes(src, data[i], Point(39, 51), false);
-				break;
-			default:
-				break;
-			}
+			DrawingBarcodes(src, data[i], pos[i], (i == 0  || i == 1 || i == 4 || i == 5)?true:false);			
 		}
 		imshow("insertdata", *src);
 	}
 private:
-
+	Point pos[8] = { Point(51, 39), Point(105, 39), Point(165, 57), Point(165, 111), Point(111, 165), Point(57, 165), Point(39, 105), Point(39, 51) };
 	unsigned char bit = 128;
-	unsigned char tmp = 0;
-
-	
+	unsigned char tmp = 0;	
 
 	void DrawingBarcodes(Mat* src, unsigned char data, Point pos, bool horizontal)
 	{
