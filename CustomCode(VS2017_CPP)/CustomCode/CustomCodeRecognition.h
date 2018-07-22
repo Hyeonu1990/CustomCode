@@ -11,7 +11,6 @@ class CustomCode
 {
 public :
 	bool pcmode = true;
-	bool smallMode = true;
 	int i = 0;
 	void recognition(Mat* src, vector<Point2f>* mker, string* result)
 	{
@@ -37,13 +36,13 @@ public :
 				Point2f vvv1 = VectorNomalize(entireMarker[1] - entireMarker[0]);
 				Point2f vvv2 = VectorNomalize(entireMarker[1] - entireMarker[2]);
 				float SWnj = v1.x * v2.x + v1.y * v2.y;
-				printf("허이짜\n");
+				
 				if (abs(nj) < 0.18f && // 0.04
 					(Angle(NEnj) > 85 && Angle(NEnj) < 96) &&
 					(Angle(SWnj) > 80 && Angle(SWnj) < 95))
 				{
 					Mat marker_image;
-					int marker_image_side_length = smallMode ? 210 : 354;//smallMode?288:576; 
+					int marker_image_side_length = 210;//smallMode?288:576; 
 
 					vector<Point2f> square_points;
 					square_points.push_back(Point2f(0, 0));
@@ -76,8 +75,8 @@ public :
 
 
 					//내부 10x10에 있는 정보를 비트로 저장하기 위한 변수
-					int cellSize = smallMode ? 6 : 12;//6;
-					int bitmatrix_size = (marker_image_side_length - 33 * 2) / cellSize;//smallMode ? (144 / cellSize) : (marker_image_side_length * 3 / 4 / cellSize); //144 / cellSize;
+					int cellSize = 6;
+					int bitmatrix_size = (marker_image_side_length - 33 * 2) / cellSize;
 					Mat bitMatrix = Mat::zeros(bitmatrix_size, bitmatrix_size, CV_8UC1); // 144 / 3 = 48
 
 					for (int y = 0; y < bitmatrix_size; y++)
@@ -98,7 +97,7 @@ public :
 					}
 					//if (pcmode) imwrite("D:\\imgs\\valueimg_bitMatrix" + to_string(i) + ".png", bitMatrix);
 					*result = CatchCharArray(bitMatrix);
-					cout << *result << endl;
+					cout << "코드인식결과 : " << *result << endl;
 					i++;
 				}
 			}
@@ -117,7 +116,7 @@ private:
 	int Find_Code(Mat* src, vector<Point2f>* mk)
 	{
 		Mat input_image = src->clone();
-		if (pcmode) imshow("input_image", input_image);imwrite("D:\\imgs\\input_image.png", input_image);
+		if (pcmode) imshow("input_image", input_image);
 
 		Mat input_gray_image;
 
@@ -131,171 +130,6 @@ private:
 		MarkerFinder(&marker, &input_gray_image, 0);
 		MarkerFinder(&L5marker, &input_gray_image, 1);
 		MarkerFinder(&L1marker, &input_gray_image, 2);
-		/*
-		vector<vector<Point2f>>detectedMarkers;
-		vector<Mat> detectedMarkersImage;
-
-		int marker_image_side_length = 100; //P마커 10x10
-											//이미지를 격자로 분할할 시 셀하나의 픽셀너비를 10으로 한다면
-											//P마커 이미지의 한변 길이는 100
-		vector<Point2f> square_points;
-		square_points.push_back(Point2f(0, 0));
-		square_points.push_back(Point2f(0, marker_image_side_length - 1));
-		square_points.push_back(Point2f(marker_image_side_length - 1, marker_image_side_length - 1));
-		square_points.push_back(Point2f(marker_image_side_length - 1, 0));
-
-		Mat marker_image;
-		for (int i = 0; i < marker.size(); i++)
-		{
-			vector<Point2f> m = marker[i];
-			//마커를 사각형형태로 바꿀 perspective transformation matrix를 구한다.
-			Mat PerspectiveTransformMatrix = getPerspectiveTransform(m, square_points);
-
-			//perspective transformation을 적용한다. 
-			warpPerspective(input_gray_image, marker_image, PerspectiveTransformMatrix, Size(marker_image_side_length, marker_image_side_length));
-			//imshow("input_gray_image_pserspective_transform" + to_string(i), marker_image);
-
-			//이진화를 적용한다. 
-			threshold(marker_image, marker_image, 0, 255, 0 | 8); // THRESH_BINARY = 0 | THRESH_OTSU = 8
-																		  //Imgproc.adaptiveThreshold(marker_image, marker_image, 255, 1, 0, 11, 2); // ADAPTIVE_THRESH_GAUSSIAN_C = 1, THRESH_BINARY = 0
-																		  //if (pcmode) Imgcodecs.imwrite("D:\\imgs\\marker_image" + i.ToString() + ".png", marker_image);
-
-																		  //테두리검사부분
-																		  //검은색 태두리를 포함한 크기는 10
-																		  //마커 이미지 테두리만 검사하여 전부 검은색인지 확인한다. 
-			int cellSize = marker_image.rows / 10;
-			int white_cell_count = 0;
-			for (int y = 0; y < 10; y++)
-			{
-				int inc = 10; // 첫번째 열과 마지막 열만 검사하기 위한 값
-
-				if (y == 0 || y == 9) inc = 1; //첫번째 줄과 마지막줄은 모든 열을 검사한다. 
-
-				for (int x = 0; x < 10; x += inc)
-				{
-					int cellX = x * cellSize;
-					int cellY = y * cellSize;
-					Mat cell = marker_image(Rect(cellX, cellY, cellSize, cellSize));
-
-					int total_cell_count = countNonZero(cell);
-
-					if (total_cell_count >(cellSize * cellSize) / 2)
-						white_cell_count++; //태두리에 흰색영역이 있다면, 셀내의 픽셀이 절반이상 흰색이면 흰색영역으로 본다
-				}
-			}
-			//검은색 태두리로 둘러쌓여 있는 것만 저장한다.
-			if (white_cell_count == 0)
-			{
-				detectedMarkers.push_back(m);
-				Mat img = marker_image.clone();
-				detectedMarkersImage.push_back(img);
-			}
-		}
-		//marker = detectedMarkers;
-
-		////////L1차확인/////////////////////////////////////////////////////////////////////////////////////////////////////////////코드사각형정렬
-
-		int Lmarker_image_side_length = 100; //L마커 3x10
-		vector<Point2f> Lsquare_points;
-		Lsquare_points.push_back(Point2f(0, 0));
-		Lsquare_points.push_back(Point2f(0, Lmarker_image_side_length * 3 / 10 - 1));
-		Lsquare_points.push_back(Point2f(Lmarker_image_side_length - 1, Lmarker_image_side_length * 3 / 10 - 1));
-		Lsquare_points.push_back(Point2f(Lmarker_image_side_length - 1, 0));
-		//Mat marker_image = new Mat();
-		for (int i = 0; i < L5marker.size(); i++)
-		{
-			vector<Point2f> m = L5marker[i];
-			//마커를 사각형형태로 바꿀 perspective transformation matrix를 구한다.
-			vector<Point2f> persrc;
-			persrc.push_back(Point2f((float)m[0].x, (float)m[0].y));
-			persrc.push_back(Point2f((float)m[1].x, (float)m[1].y));
-			persrc.push_back(Point2f((float)m[2].x + (float)m[4].x - (float)m[3].x, (float)m[2].y + (float)m[4].y - (float)m[3].y));
-			persrc.push_back(Point2f((float)m[5].x, (float)m[5].y));
-			
-			Mat PerspectiveTransformMatrix = getPerspectiveTransform(persrc, Lsquare_points);
-
-			//perspective transformation을 적용한다. 
-			warpPerspective(input_gray_image, marker_image, PerspectiveTransformMatrix, Size(Lmarker_image_side_length, Lmarker_image_side_length * 3 / 10));
-			//imshow("input_gray_image_pserspective_transform" + to_string(i), marker_image);
-
-			//이진화를 적용한다. 
-			threshold(marker_image, marker_image, 0, 255, 0 | 8); // THRESH_BINARY = 0 | THRESH_OTSU = 8
-																		  //Imgproc.adaptiveThreshold(marker_image, marker_image, 255, 1, 0, 11, 2); // ADAPTIVE_THRESH_GAUSSIAN_C = 1, THRESH_BINARY = 0
-
-			int cellSize = marker_image.cols / 10;
-			int white_cell_count = 0;
-			char data = 0;
-			char tmp = 1;
-
-			for (int x = 1; x < 9; x += 1)
-			{
-				int cellX = x * cellSize;
-				int cellY = 1 * cellSize;
-				Mat cell = marker_image(Rect(cellX, cellY, cellSize, cellSize));
-
-				int total_cell_count = countNonZero(cell);
-
-				if (total_cell_count >(cellSize * cellSize) / 2)
-				{
-					white_cell_count++; //태두리에 흰색영역이 있다면, 셀내의 픽셀이 절반이상 흰색이면 흰색영역으로 본다
-					data |= tmp;
-				}
-				tmp <<= 1;
-			}
-			//if (pcmode) Imgcodecs.imwrite("D:\\imgs\\L5marker_image_" + i + "_" + white_cell_count + ".png", marker_image);
-			//Debug.Log("L5pos : "+m.toArray()[5] + "\ndata : " + (int)data);
-			if (data == 171 || data == 175)//(white_cell_count == 5 || white_cell_count == 6)
-			{
-				L5pos.push_back(m[5]);
-			}
-		}
-
-
-		for (int i = 0; i < L1marker.size(); i++)
-		{
-			vector<Point2f> m = L1marker[i];
-			//마커를 사각형형태로 바꿀 perspective transformation matrix를 구한다.
-			vector<Point2f> persrc;
-			persrc.push_back(Point2f((float)m[4].x - (float)m[5].x + (float)m[0].x, (float)m[4].y - (float)m[5].y + (float)m[0].y));
-			persrc.push_back(Point2f((float)m[1].x, (float)m[1].y));
-			persrc.push_back(Point2f((float)m[2].x, (float)m[2].y));
-			persrc.push_back(Point2f((float)m[3].x, (float)m[3].y));
-			Mat PerspectiveTransformMatrix = getPerspectiveTransform(persrc, Lsquare_points);
-
-			//perspective transformation을 적용한다. 
-			warpPerspective(input_gray_image, marker_image, PerspectiveTransformMatrix, Size(Lmarker_image_side_length, Lmarker_image_side_length * 3 / 10));
-			//imshow("input_gray_image_pserspective_transform" + to_string(i), marker_image);
-
-			//이진화를 적용한다. 
-			threshold(marker_image, marker_image, 0, 255, 0 | 8); // THRESH_BINARY = 0 | THRESH_OTSU = 8
-																		  //Imgproc.adaptiveThreshold(marker_image, marker_image, 255, 1, 0, 11, 2); // ADAPTIVE_THRESH_GAUSSIAN_C = 1, THRESH_BINARY = 0
-
-			int cellSize = marker_image.cols / 10;
-			int white_cell_count = 0;
-			char data = 0;
-			char tmp = 1;
-
-			for (int x = 1; x < 9; x += 1)
-			{
-				int cellX = x * cellSize;
-				int cellY = 1 * cellSize;
-				Mat cell = marker_image(Rect(cellX, cellY, cellSize, cellSize));
-
-				int total_cell_count = countNonZero(cell);
-
-				if (total_cell_count >(cellSize * cellSize) / 2)
-				{
-					white_cell_count++; //태두리에 흰색영역이 있다면, 셀내의 픽셀이 절반이상 흰색이면 흰색영역으로 본다
-					data |= tmp;
-				}
-				tmp <<= 1;
-			}
-			//if (pcmode) Imgcodecs.imwrite("D:\\imgs\\L1marker_image_" + i + "_" + white_cell_count + ".png", marker_image);
-			//Debug.Log("L1pos : " + m.toArray()[5] + "\ndata : " + (int)data);
-			if (data == 223)//(white_cell_count == 7)
-				L1pos = m[1];
-		}
-		*/
 
 		/////마커들 비트매트릭스화 하여 내부판단////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 		//검은색 테두리 제외한 내부 확인
@@ -355,8 +189,8 @@ private:
 						}
 					}
 				}
-				//if (pcmode) imwrite("D:\\imgs\\bitMatrix" + to_string(i) + ".png", bitMatrix);
-
+				
+				/*
 				//방향판단
 				//if (bitMatrix.get(7, 7)[0] > 0 && bitMatrix.get(7, 6)[0] == 0)
 				if (bitMatrix.at<uchar>(2, 7) > 0 && bitMatrix.at<uchar>(2, 6) == 0)
@@ -395,8 +229,8 @@ private:
 				{
 					continue;
 				}
-				//if (pcmode) imwrite("D:\\imgs\\bitMatrixturned" + to_string(i) + "_" + to_string(angle) + ".png", bitMatrix);
-
+				*/
+				
 				//P판단
 				white_cell_count = 0;
 				for (int y = 0; y < 6; y++)
@@ -415,30 +249,31 @@ private:
 							(X == 2 && Y == 3) ||
 							(X == 7 && Y == 3) ||
 							(X == 2 && Y == 4) ||
-							//(X == 4 && Y == 4) ||
-							//(X == 5 && Y == 4) ||
+							(X == 4 && Y == 4) ||
+							(X == 5 && Y == 4) ||
 							(X == 7 && Y == 4) ||
 							(X == 2 && Y == 5) ||
+							(X == 4 && Y == 5) ||
 							(X == 7 && Y == 5) ||
 							(X == 2 && Y == 6) ||
-							(X == 4 && Y == 6) || // 3
-							(X == 5 && Y == 6) || // 4
-							(X == 6 && Y == 6) || // 5
-							(X == 7 && Y == 6) || // 7
-							(X == 2 && Y == 7) || // 5
-							(X == 3 && Y == 7) || // 6
-							(X == 4 && Y == 7)    // 7
+							(X == 4 && Y == 6) ||
+							(X == 5 && Y == 6) ||
+							(X == 7 && Y == 6) ||
+							(X == 2 && Y == 7) ||
+							(X == 7 && Y == 7)
 							)
 						{
 							if (bitMatrix.at<uchar>(Y, X) > 0)
 							{
+								printf("X: %d, Y:%d", X, Y);
 								white_cell_count++;
 							}
 						}
 					}
 				}
 			}
-
+			
+			printf("whiecell: %d\n", white_cell_count);
 			if (white_cell_count == 0 && black_cell_count == 0)
 			{
 				if (L5pos.size() >= 2)

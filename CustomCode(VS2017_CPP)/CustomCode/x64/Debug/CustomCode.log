@@ -1,11 +1,11 @@
 ﻿  main.cpp
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(50): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(51): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(52): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(600): warning C4244: '초기화 중': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(602): warning C4244: 'return': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(687): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(688): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(689): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
-d:\visualstudioprojects\customcode\customcode(vs2017_cpp)\customcode\main.cpp(4): warning C4326: 'main'의 반환 형식이 'int'이어야 하는데 'void'입니다.
-  CustomCode.vcxproj -> D:\VisualStudioProjects\CustomCode\CustomCode(VS2017_CPP)\x64\Debug\CustomCode.exe
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(49): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(50): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(51): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(435): warning C4244: '초기화 중': 'double'에서 'int'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(437): warning C4244: 'return': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(522): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(523): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\customcoderecognition.h(524): warning C4244: '인수': 'int'에서 'float'(으)로 변환하면서 데이터가 손실될 수 있습니다.
+d:\mygithub\customcode\customcode(vs2017_cpp)\customcode\main.cpp(4): warning C4326: 'main'의 반환 형식이 'int'이어야 하는데 'void'입니다.
+  CustomCode.vcxproj -> D:\MyGitHub\CustomCode\CustomCode(VS2017_CPP)\x64\Debug\CustomCode.exe

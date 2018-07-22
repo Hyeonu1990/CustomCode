@@ -6,7 +6,7 @@ void main()
 	CustomCode customcode;
 	vector<Point2f> markers;
 
-	Mat img = imread("D:\\imgs\\0_LPbasic37.png");
+	Mat img = imread("./img/input.png");
 	customcode.recognition(&img, &markers, &result);
 	waitKey(0);
 	return;
