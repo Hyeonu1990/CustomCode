@@ -1,7 +1,7 @@
 # CustomCode
 Custom Simple Code
 
-Visual Stuido is based on OpenCV 3.4.1 (https://opencv.org/releases.html)
+This project is based on OpenCV 3.4.1 (https://opencv.org/releases.html)
 
 Opencv Lib Location - C:\opencv (When you install OpenCV as WinPack, Extract to C:\)
 
