@@ -490,16 +490,16 @@ private:
 					Point2f vec1 = approx[2];
 					Point2f vec2 = approx[4];
 					Point2f vec3 = approx[5];
-					float vnj = VectorNomalize(vec2 - vec0).x * VectorNomalize(vec3 - vec1).x + VectorNomalize(vec2 - vec0).y * VectorNomalize(vec3 - vec1).y;
-					printf("벡터내적 : %f\n", vnj);
-					if (abs(vnj) < 0.46)// ㄴ모양을 제외한 육각형 //0.17
+					float inner = VectorNomalize(vec2 - vec0).x * VectorNomalize(vec3 - vec1).x + VectorNomalize(vec2 - vec0).y * VectorNomalize(vec3 - vec1).y;
+					printf("벡터내적 : %f\n", inner);
+					if (abs(inner) < 0.46)// ㄴ모양을 제외한 육각형 //0.17
 					{
 						vector<Point2f> points;
 						for (int j = 0; j<approx.size(); j++)
 							points.push_back(cv::Point2f(approx[j].x, approx[j].y));
 						L5marker.push_back(points);
 					}
-					else if (abs(vnj) > 0.9) // ㄴ모양 육각형
+					else if (abs(inner) > 0.9) // ㄴ모양 육각형
 					{
 						vector<Point2f> points;
 						for (int j = 0; j<approx.size(); j++)
