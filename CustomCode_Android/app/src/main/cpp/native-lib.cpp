@@ -13,7 +13,7 @@ Java_customcode_customcode_1android_MainActivity_stringFromJNI(
 }
 
 extern "C"
-JNIEXPORT void JNICALL
+JNIEXPORT jstring JNICALL
 Java_customcode_customcode_1android_MainActivity_CustomCode(JNIEnv *env, jobject instance,
                                                             jlong matAddrInput,
                                                             jlong matAddrResult) {
@@ -27,4 +27,6 @@ Java_customcode_customcode_1android_MainActivity_CustomCode(JNIEnv *env, jobject
     CustomCode customcode;
     vector<Point2f> markers;
     customcode.recognition(&matInput, &markers, &result);
+    
+    return env->NewStringUTF(result.c_str());
 }
